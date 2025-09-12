@@ -1,0 +1,18 @@
+[package]
+name = "ethqr-gen"
+version = "0.1.0"
+edition = "2024"
+authors = ["dagregi"]
+description = "Ethiopian QR Code Payment Generator - EMVCo compliant QR codes for IPS ET"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/dagregi/ethqr-gen"
+keywords = ["qr", "payments", "ethiopia", "emvco", "fintech"]
+categories = ["encoding", "finance"]
+
+[dependencies]
+thiserror = "2.0.16"
+uuid = "1.18.1"
+
+[dev-dependencies]
+anyhow = "1.0.99"
