@@ -8,6 +8,7 @@
 //! - EMVCo QR Code standard compliance
 //! - Support for multiple payment schemes (Visa, Mastercard, IPS ET, etc.)
 //! - Static and dynamic QR code generation
+//! - QR code image generation (with `qr-image` feature)
 //!
 //! ## Quick Start
 //!
@@ -23,8 +24,6 @@
 //!     .merchant_category_code("5812") // Restaurant
 //!     .add_scheme(SchemeConfig::visa("4111111111111111"))
 //!     .build()?;
-//!
-//! println!("Static QR: {}", qr_code);
 //! # Ok(())
 //! # }
 //! ```
@@ -51,15 +50,32 @@
 //!     .transaction_amount("50.00")
 //!     .additional_data(additional_data)
 //!     .build()?;
+//! # Ok(())
+//! # }
+//! ```
 //!
-//! println!("Dynamic QR: {}", qr_code);
+//! ### QR Code Image Generation (requires `qr-image` feature)
+//!
+//! ```rust
+//! use ethqr_gen::{QRBuilder, fields::SchemeConfig};
+//!
+//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! let qr_image = QRBuilder::new()
+//!     .merchant_name("Coffee Shop")
+//!     .merchant_city("Addis Ababa")
+//!     .merchant_category_code("5812")
+//!     .add_scheme(SchemeConfig::visa("4111111111111111"))
+//!     .build_image()?;
+//!
+//! // Save to file
+//! qr_image.save("/tmp/payment_qr.png")?;
 //! # Ok(())
 //! # }
 //! ```
 //!
 //! ## Payment Schemes
 //!
-//! The library supports multiple payment schemes through the [`SchemeConfig`](fields::SchemeConfig) type:
+//! The library supports multiple payment schemes through the [`SchemeConfig`] type:
 //!
 //! - **Visa**: `SchemeConfig::visa("account_info")`
 //! - **Mastercard**: `SchemeConfig::mastercard("account_info")`
@@ -70,8 +86,14 @@ pub mod crc;
 pub mod error;
 pub mod fields;
 
+use std::fmt;
+
 use crate::error::{QRError, Result};
 use crate::fields::{AdditionalData, SchemeConfig};
+
+#[cfg(feature = "qr-image")]
+use image::{DynamicImage, ImageBuffer, Luma};
+use qrcode::QrCode;
 
 pub mod constants {
     pub const PAYLOAD_FORMAT_INDICATOR: &str = "01";
@@ -82,6 +104,8 @@ pub mod constants {
     pub const DYNAMIC_QR_POI: &str = "12";
     pub const MAX_MERCHANT_NAME_LEN: usize = 25;
     pub const MAX_MERCHANT_CITY_LEN: usize = 15;
+
+    pub const DEFAULT_QRIMAGE_SIZE: u32 = 10;
 }
 
 pub mod tags {
@@ -135,7 +159,6 @@ impl EMVTag {
 #[derive(Default, Clone)]
 pub struct QRBuilder {
     payload_format_indicator: String,
-    point_of_initiation: Option<String>,
     merchant_name: String,
     merchant_city: String,
     merchant_category_code: String,
@@ -148,7 +171,11 @@ pub struct QRBuilder {
 
 impl QRBuilder {
     pub fn new() -> Self {
-        Self::default()
+        Self {
+            payload_format_indicator: constants::PAYLOAD_FORMAT_INDICATOR.to_string(),
+            transaction_currency: constants::ETB_CURRENCY_CODE.to_string(),
+            ..Self::default()
+        }
     }
 
     /// Set merchant name
@@ -233,18 +260,14 @@ impl QRBuilder {
         Ok(())
     }
 
-    /// Build the QR code
-    pub fn build(&mut self) -> Result<String> {
+    fn build_payload(&self) -> Result<String> {
         self.validate()?;
 
-        self.point_of_initiation = if self.transaction_amount.is_some() {
+        let point_of_initiation = if self.transaction_amount.is_some() {
             Some(constants::DYNAMIC_QR_POI.to_string())
         } else {
             Some(constants::STATIC_QR_POI.to_string())
         };
-
-        self.payload_format_indicator = constants::PAYLOAD_FORMAT_INDICATOR.to_string();
-        self.transaction_currency = constants::ETB_CURRENCY_CODE.to_string();
 
         let mut tags = Vec::new();
 
@@ -255,7 +278,7 @@ impl QRBuilder {
         ));
 
         // Point of Initiation (optional)
-        if let Some(ref poi) = self.point_of_initiation {
+        if let Some(ref poi) = point_of_initiation {
             tags.push(EMVTag::new(tags::POINT_OF_INITIATION, poi));
         }
 
@@ -320,5 +343,80 @@ impl QRBuilder {
         }
 
         Ok(payload)
+    }
+
+    /// Build the QR code and return a QR code object
+    pub fn build(&self) -> Result<QrCode> {
+        let payload = self.build_payload()?;
+
+        QrCode::new(&payload).map_err(|e| QRError::BuilderError {
+            message: format!("Failed to create QR code: {}", e),
+        })
+    }
+
+    /// Build QR code as an image
+    #[cfg(feature = "qr-image")]
+    pub fn build_image(&mut self) -> Result<DynamicImage> {
+        let image = self
+            .build()?
+            .render::<Luma<u8>>()
+            .module_dimensions(
+                constants::DEFAULT_QRIMAGE_SIZE,
+                constants::DEFAULT_QRIMAGE_SIZE,
+            )
+            .build();
+
+        Ok(DynamicImage::ImageLuma8(image))
+    }
+
+    /// Build QR code as an image with custom module size
+    #[cfg(feature = "qr-image")]
+    pub fn build_image_with_size(&mut self, module_size: u32) -> Result<DynamicImage> {
+        let qr_code = self.build()?;
+
+        let image = qr_code
+            .render::<Luma<u8>>()
+            .module_dimensions(module_size, module_size)
+            .build();
+
+        Ok(DynamicImage::ImageLuma8(image))
+    }
+
+    /// Build QR code as a raw image buffer
+    #[cfg(feature = "qr-image")]
+    pub fn build_raw_image(&mut self) -> Result<ImageBuffer<Luma<u8>, Vec<u8>>> {
+        let qr_code = self.build()?;
+
+        let image = qr_code
+            .render::<Luma<u8>>()
+            .module_dimensions(10, 10)
+            .build();
+
+        Ok(image)
+    }
+
+    /// Build QR code as a raw image buffer with custom module size
+    #[cfg(feature = "qr-image")]
+    pub fn build_raw_image_with_size(
+        &mut self,
+        module_size: u32,
+    ) -> Result<ImageBuffer<Luma<u8>, Vec<u8>>> {
+        let qr_code = self.build()?;
+
+        let image = qr_code
+            .render::<Luma<u8>>()
+            .module_dimensions(module_size, module_size)
+            .build();
+
+        Ok(image)
+    }
+}
+
+impl fmt::Display for QRBuilder {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.build_payload() {
+            Ok(payload) => write!(f, "{}", payload),
+            Err(e) => write!(f, "QR Error: {}", e),
+        }
     }
 }

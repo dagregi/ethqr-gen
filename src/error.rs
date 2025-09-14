@@ -31,6 +31,29 @@ pub enum QRError {
 
     #[error("Validation error: {message}")]
     ValidationError { message: String },
+
+    #[error("QR code generation failed: {message}")]
+    QRCodeError { message: String },
+
+    #[error("Image processing failed: {message}")]
+    ImageError { message: String },
 }
 
 pub type Result<T> = std::result::Result<T, QRError>;
+
+impl From<qrcode::types::QrError> for QRError {
+    fn from(err: qrcode::types::QrError) -> Self {
+        QRError::QRCodeError {
+            message: err.to_string(),
+        }
+    }
+}
+
+#[cfg(feature = "qr-image")]
+impl From<image::ImageError> for QRError {
+    fn from(err: image::ImageError) -> Self {
+        QRError::ImageError {
+            message: err.to_string(),
+        }
+    }
+}

@@ -75,20 +75,25 @@ let qr_code = QRBuilder::new()
 
 ## Supported Payment Schemes
 
-| Scheme | Method | Description |
-|--------|--------|-------------|
-| Visa | `SchemeConfig::visa()` | Visa payment cards |
-| Mastercard | `SchemeConfig::mastercard()` | Mastercard payment cards |
-| UnionPay | `SchemeConfig::unionpay()` | UnionPay payment cards |
-| IPS ET | `SchemeConfig::ips_et()` | Ethiopian Interbank Payment System |
+| Scheme     | Method                       | Description                        |
+| ---------- | ---------------------------- | ---------------------------------- |
+| Visa       | `SchemeConfig::visa()`       | Visa payment cards                 |
+| Mastercard | `SchemeConfig::mastercard()` | Mastercard payment cards           |
+| UnionPay   | `SchemeConfig::unionpay()`   | UnionPay payment cards             |
+| IPS ET     | `SchemeConfig::ips_et()`     | Ethiopian Interbank Payment System |
 
 ## Standards Compliance
 
 This library implements:
+
 - EMVCo QR Code Specification for Payment Systems
 - Ethiopian Interoperable QR Standard
 - ISO 4217 currency codes (ETB - Ethiopian Birr)
 - ISO 3166-1 country codes (ET - Ethiopia)
+
+## Examples
+
+See the `examples/` directory for more usage examples
 
 ## Contributing
 
