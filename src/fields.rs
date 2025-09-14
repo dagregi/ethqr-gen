@@ -206,8 +206,12 @@ pub enum SchemeConfig {
 
 impl SchemeConfig {
     /// Create IPS ET scheme builder
-    pub fn ips_et(guid: String, bic: String, account: String) -> Self {
-        SchemeConfig::IPSET { guid, bic, account }
+    pub fn ips_et(guid: &str, bic: &str, account: &str) -> Self {
+        SchemeConfig::IPSET {
+            guid: guid.to_string(),
+            bic: bic.to_string(),
+            account: account.to_string(),
+        }
     }
 
     /// Create Visa scheme

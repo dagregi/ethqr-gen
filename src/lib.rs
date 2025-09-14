@@ -8,6 +8,63 @@
 //! - EMVCo QR Code standard compliance
 //! - Support for multiple payment schemes (Visa, Mastercard, IPS ET, etc.)
 //! - Static and dynamic QR code generation
+//!
+//! ## Quick Start
+//!
+//! ### Static QR Code (no predefined amount)
+//!
+//! ```rust
+//! use ethqr_gen::{QRBuilder, fields::SchemeConfig};
+//!
+//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! let qr_code = QRBuilder::new()
+//!     .merchant_name("Coffee Shop")
+//!     .merchant_city("Addis Ababa")
+//!     .merchant_category_code("5812") // Restaurant
+//!     .add_scheme(SchemeConfig::visa("4111111111111111"))
+//!     .build()?;
+//!
+//! println!("Static QR: {}", qr_code);
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! ### Dynamic QR Code (with specific amount)
+//!
+//! ```rust
+//! use ethqr_gen::{QRBuilder, fields::{SchemeConfig, AdditionalData}};
+//!
+//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! let additional_data = AdditionalData::new()
+//!     .bill_number("INV-001")
+//!     .reference_label("ORDER-123");
+//!
+//! let qr_code = QRBuilder::new()
+//!     .merchant_name("Restaurant")
+//!     .merchant_city("Dire Dawa")
+//!     .merchant_category_code("5812")
+//!     .add_scheme(SchemeConfig::ips_et(
+//!         "581b314e257f41bfbbdc6384daa31d16",
+//!         "CBETETAA",
+//!         "10000171234567890",
+//!     ))
+//!     .transaction_amount("50.00")
+//!     .additional_data(additional_data)
+//!     .build()?;
+//!
+//! println!("Dynamic QR: {}", qr_code);
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! ## Payment Schemes
+//!
+//! The library supports multiple payment schemes through the [`SchemeConfig`](fields::SchemeConfig) type:
+//!
+//! - **Visa**: `SchemeConfig::visa("account_info")`
+//! - **Mastercard**: `SchemeConfig::mastercard("account_info")`
+//! - **UnionPay**: `SchemeConfig::unionpay("account_info")`
+//! - **IPS ET**: `SchemeConfig::ips_et("guid", "bic", "account_info")` (Ethiopian Interbank Payment System)
 
 pub mod crc;
 pub mod error;
