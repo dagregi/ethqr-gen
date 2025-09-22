@@ -24,10 +24,10 @@ const CRC16_CCITT_TABLE: [u16; 256] = [
     0x2e93, 0x3eb2, 0x0ed1, 0x1ef0,
 ];
 
-/// Calculate CRC-16-CCITT checksum according to EMVCo specification
+/// Calculate CRC-16-CCITT checksum according to `EMVCo` specification
 ///
 /// This function calculates the CRC-16 checksum using the CCITT polynomial (0x1021)
-/// with initial value 0xFFFF, as required by the EMVCo QR Code specification.
+/// with initial value 0xFFFF, as required by the `EMVCo` QR Code specification.
 ///
 /// # Arguments
 /// * `data` - The string data to calculate CRC for
@@ -43,6 +43,7 @@ const CRC16_CCITT_TABLE: [u16; 256] = [
 /// let data = "000201010212020140001234567890120415534512345678901252045999530358654041.005802CN5914BEST TRANSPORT6009GUANGZHOU6304";
 /// assert_eq!(calculate_crc16(data), "A9AD");
 /// ```
+#[must_use]
 pub fn calculate_crc16(data: &str) -> String {
     let mut crc: u16 = 0xFFFF;
 
@@ -52,10 +53,10 @@ pub fn calculate_crc16(data: &str) -> String {
     }
 
     // EMVCo specification requires the CRC to be formatted as 4-digit uppercase hex
-    format!("{:04X}", crc)
+    format!("{crc:04X}")
 }
 
-/// Verify CRC of QR code string according to EMVCo specification
+/// Verify CRC of QR code string according to `EMVCo` specification
 ///
 /// This function verifies that the CRC at the end of a QR code string matches
 /// the calculated CRC for the payload data.
@@ -74,6 +75,7 @@ pub fn calculate_crc16(data: &str) -> String {
 /// let qr_string = "000201010212020140001234567890120415534512345678901252045999530358654041.005802CN5914BEST TRANSPORT6009GUANGZHOU6304A9AD";
 /// assert!(verify_crc(qr_string));
 /// ```
+#[must_use]
 pub fn verify_crc(qr_string: &str) -> bool {
     if qr_string.len() < 8 {
         return false;
@@ -113,7 +115,7 @@ mod tests {
         assert!(crc.chars().all(|c| c.is_ascii_hexdigit()));
 
         // Test the complete verification process
-        let complete_qr = format!("{}{}", test_data, crc);
+        let complete_qr = format!("{test_data}{crc}");
         assert!(verify_crc(&complete_qr));
     }
 
@@ -122,7 +124,7 @@ mod tests {
         // Test with simple data
         let payload = "00020101121502014000123456789012345260116304";
         let crc = calculate_crc16(payload);
-        let complete_qr = format!("{}{}", payload, crc);
+        let complete_qr = format!("{payload}{crc}");
 
         // Should pass CRC verification
         assert!(verify_crc(&complete_qr));

@@ -14,6 +14,18 @@ image = { version = "0.25.6", optional = true }
 qrcode = { version = "0.14.1" }
 thiserror = "2.0.16"
 
+[[example]]
+name = "basic_static"
+required-features = ["default"]
+
+[[example]]
+name = "dynamic_with_amount"
+required-features = ["default"]
+
+[[example]]
+name = "image_generation"
+required-features = ["qr-image"]
+
 [features]
 default = []
 qr-image = ["dep:image"]

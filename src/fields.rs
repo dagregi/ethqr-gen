@@ -34,6 +34,7 @@ pub struct AdditionalData {
 }
 
 impl AdditionalData {
+    #[must_use]
     pub fn new() -> AdditionalData {
         AdditionalData::default()
     }
@@ -105,6 +106,7 @@ impl AdditionalData {
     }
 
     /// Encode additional data as EMV tag
+    #[must_use]
     pub fn encode(&self) -> Option<EMVTag> {
         let mut sub_tags = Vec::new();
 
@@ -151,7 +153,10 @@ impl AdditionalData {
         if sub_tags.is_empty() {
             None
         } else {
-            let value = sub_tags.iter().map(|tag| tag.encode()).collect::<String>();
+            let value = sub_tags
+                .iter()
+                .map(super::EMVTag::encode)
+                .collect::<String>();
             Some(EMVTag::new(tags::ADDITIONAL_DATA, value))
         }
     }
@@ -206,6 +211,7 @@ pub enum SchemeConfig {
 
 impl SchemeConfig {
     /// Create IPS ET scheme builder
+    #[must_use]
     pub fn ips_et(guid: &str, bic: &str, account: &str) -> Self {
         SchemeConfig::IPSET {
             guid: guid.to_string(),
@@ -229,6 +235,7 @@ impl SchemeConfig {
     }
 
     /// Get the scheme tag ID
+    #[must_use]
     pub fn tag_id(&self) -> &str {
         match self {
             SchemeConfig::Visa { .. } => tags::VISA,

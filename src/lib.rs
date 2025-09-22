@@ -5,7 +5,7 @@
 //!
 //! ## Features
 //!
-//! - EMVCo QR Code standard compliance
+//! - `EMVCo` QR Code standard compliance
 //! - Support for multiple payment schemes (Visa, Mastercard, IPS ET, etc.)
 //! - Static and dynamic QR code generation
 //! - QR code image generation (with `qr-image` feature)
@@ -79,14 +79,14 @@
 //!
 //! - **Visa**: `SchemeConfig::visa("account_info")`
 //! - **Mastercard**: `SchemeConfig::mastercard("account_info")`
-//! - **UnionPay**: `SchemeConfig::unionpay("account_info")`
+//! - **Unionpay**: `SchemeConfig::unionpay("account_info")`
 //! - **IPS ET**: `SchemeConfig::ips_et("guid", "bic", "account_info")` (Ethiopian Interbank Payment System)
 
 pub mod crc;
 pub mod error;
 pub mod fields;
 
-use std::fmt;
+use std::fmt::{self, Write};
 
 use crate::error::{QRError, Result};
 use crate::fields::{AdditionalData, SchemeConfig};
@@ -145,11 +145,13 @@ impl EMVTag {
     }
 
     /// Get the length of the value
+    #[must_use]
     pub fn length(&self) -> usize {
         self.value.len()
     }
 
     /// Encode as TLV string
+    #[must_use]
     pub fn encode(&self) -> String {
         format!("{}{:02}{}", self.id, self.length(), self.value)
     }
@@ -170,6 +172,7 @@ pub struct QRBuilder {
 }
 
 impl QRBuilder {
+    #[must_use]
     pub fn new() -> Self {
         Self {
             payload_format_indicator: constants::PAYLOAD_FORMAT_INDICATOR.to_string(),
@@ -197,6 +200,7 @@ impl QRBuilder {
     }
 
     /// Add a payment scheme
+    #[must_use]
     pub fn add_scheme(mut self, scheme: SchemeConfig) -> Self {
         self.schemes.push(scheme);
         self
@@ -209,6 +213,7 @@ impl QRBuilder {
     }
 
     /// Set additional data
+    #[must_use]
     pub fn additional_data(mut self, data: AdditionalData) -> Self {
         self.additional_data = Some(data);
         self
@@ -329,11 +334,13 @@ impl QRBuilder {
         }
 
         // Build payload without CRC
-        let mut payload = tags.iter().map(|tag| tag.encode()).collect::<String>();
+        let mut payload = tags.iter().map(EMVTag::encode).collect::<String>();
 
         // Calculate and append CRC
-        let crc = crc::calculate_crc16(&format!("{}6304", payload));
-        payload.push_str(&format!("63{:02}{}", crc.len(), crc));
+        let crc = crc::calculate_crc16(&format!("{payload}6304"));
+        write!(&mut payload, "63{:02}{}", crc.len(), crc).map_err(|e| QRError::BuilderError {
+            message: format!("Failed to build QR code: {e}"),
+        })?;
 
         // Validate length
         if payload.len() > constants::MAX_QR_LENGTH {
@@ -346,12 +353,12 @@ impl QRBuilder {
     }
 
     /// Build the QR code and return a QR code object
+    ///
+    /// # Errors
     pub fn build(&self) -> Result<QrCode> {
         let payload = self.build_payload()?;
 
-        QrCode::new(&payload).map_err(|e| QRError::BuilderError {
-            message: format!("Failed to create QR code: {}", e),
-        })
+        Ok(QrCode::new(&payload)?)
     }
 
     /// Build QR code as an image
@@ -415,8 +422,8 @@ impl QRBuilder {
 impl fmt::Display for QRBuilder {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.build_payload() {
-            Ok(payload) => write!(f, "{}", payload),
-            Err(e) => write!(f, "QR Error: {}", e),
+            Ok(payload) => write!(f, "{payload}"),
+            Err(e) => write!(f, "QR Error: {e}"),
         }
     }
 }
