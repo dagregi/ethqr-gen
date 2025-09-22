@@ -145,13 +145,11 @@ impl EMVTag {
     }
 
     /// Get the length of the value
-    #[must_use]
     pub fn length(&self) -> usize {
         self.value.len()
     }
 
     /// Encode as TLV string
-    #[must_use]
     pub fn encode(&self) -> String {
         format!("{}{:02}{}", self.id, self.length(), self.value)
     }
@@ -200,7 +198,6 @@ impl QRBuilder {
     }
 
     /// Add a payment scheme
-    #[must_use]
     pub fn add_scheme(mut self, scheme: SchemeConfig) -> Self {
         self.schemes.push(scheme);
         self
@@ -213,7 +210,6 @@ impl QRBuilder {
     }
 
     /// Set additional data
-    #[must_use]
     pub fn additional_data(mut self, data: AdditionalData) -> Self {
         self.additional_data = Some(data);
         self

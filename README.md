@@ -1,5 +1,7 @@
 # ethqr-gen
 
+[![CI](https://github.com/dagregi/ethqr-gen/workflows/CI/badge.svg)](https://github.com/dagregi/ethqr-gen/actions)
+
 A Rust library for generating EMVCo-compliant QR codes for payments according to the Ethiopian Interoperable QR Standard.
 
 ## Features
