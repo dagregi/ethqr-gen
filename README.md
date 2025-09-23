@@ -1,6 +1,11 @@
 # ethqr-gen
 
-[![CI](https://github.com/dagregi/ethqr-gen/workflows/CI/badge.svg)](https://github.com/dagregi/ethqr-gen/actions)
+[![CI](https://github.com/dagregi/ethqr-gen/workflows/CI/badge.svg)](https://github.com/dagregi/ethqr-gen/actions/workflows/ci.yml)
+[![Crates.io](https://img.shields.io/crates/v/ethqr-gen.svg)](https://crates.io/crates/ethqr-gen)
+[![Documentation](https://docs.rs/ethqr-gen/badge.svg)](https://docs.rs/ethqr-gen)
+[![Downloads](https://img.shields.io/crates/d/ethqr-gen)](https://crates.io/crates/ethqr-gen)
+[![License: MIT OR Apache-2.0](https://img.shields.io/crates/l/ethqr-gen)](#license)
+[![Rust Version](https://img.shields.io/badge/rustc-1.70+-blue.svg)](https://blog.rust-lang.org/2023/06/01/Rust-1.70.0.html)
 
 A Rust library for generating EMVCo-compliant QR codes for payments according to the Ethiopian Interoperable QR Standard.
 
@@ -10,6 +15,7 @@ A Rust library for generating EMVCo-compliant QR codes for payments according to
 - Support for multiple payment schemes (Visa, Mastercard, IPS ET, etc.)
 - Static and dynamic QR code generation
 - Built-in validation and error handling
+- QR code image generation** (enable with `qr-image` feature)
 
 ## Installation
 
@@ -18,6 +24,9 @@ Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
 ethqr-gen = "0.1.0"
+
+# For QR code image generation
+ethqr-gen = { version = "0.1.0", features = ["qr-image"] }
 ```
 
 ## Quick Start
@@ -25,7 +34,7 @@ ethqr-gen = "0.1.0"
 ### Static QR Code (no amount specified)
 
 ```rust
-use ethqr_gen::{QRBuilder, SchemeConfig, fields::SchemeConfig};
+use ethqr_gen::{QRBuilder, fields::SchemeConfig};
 
 let qr_code = QRBuilder::new()
     .merchant_name("Coffee Shop")
@@ -38,7 +47,7 @@ let qr_code = QRBuilder::new()
 ### Dynamic QR Code (with specific amount)
 
 ```rust
-use ethqr_gen::{QRBuilder, SchemeConfig, AdditionalData};
+use ethqr_gen::{QRBuilder, fields::{SchemeConfig, AdditionalData}};
 
 let additional_data = AdditionalData::new()
     .bill_number("INV-001")
@@ -95,7 +104,7 @@ This library implements:
 
 ## Examples
 
-See the `examples/` directory for more usage examples
+Check out the [`examples/`](examples/) directory for more comprehensive usage examples:
 
 ## Contributing
 
